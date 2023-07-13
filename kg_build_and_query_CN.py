@@ -12,7 +12,7 @@ import random
 
 CODE_BUILD_KG = """
 
-# Prepare for GraphStore
+# 准备 GraphStore
 
 os.environ['NEBULA_USER'] = "root"
 os.environ['NEBULA_PASSWORD'] = "nebula" # default password
@@ -25,7 +25,7 @@ tags = ["entity"] # default, could be omit if create from an empty kg
 graph_store = NebulaGraphStore(space_name=space_name, edge_types=edge_types, rel_prop_names=rel_prop_names, tags=tags)
 storage_context = StorageContext.from_defaults(graph_store=graph_store)
 
-# Download and Preprocess Data
+# 从维基百科下载、预处理数据
 
 from llama_index import download_loader
 
@@ -35,7 +35,7 @@ loader = WikipediaReader()
 
 documents = loader.load_data(pages=['Guardians of the Galaxy Vol. 3'], auto_suggest=False)
 
-# Build Knowledge Graph
+# 利用 LLM 从文档中抽取知识三元组，并存储到 GraphStore（NebulaGraph）
 
 kg_index = KnowledgeGraphIndex.from_documents(
     documents,
@@ -311,7 +311,7 @@ def query_nebulagraph(
     return session_pool.execute(query)
 
 
-st.title("Demo: Knowledge Graph Build and Query with LLM")
+st.title("利用 LLM 构建、查询知识图谱")
 
 (
     tab_code_kg,
@@ -322,34 +322,35 @@ st.title("Demo: Knowledge Graph Build and Query with LLM")
     tab_code_nl2cypher,
 ) = st.tabs(
     [
-        "Code: Build KG",
-        "Full Notebook",
-        "Graph View",
-        "Query",
-        "Natural Language to Cypher",
-        "Code: NL2Cypher",
+        "代码：构建知识图谱",
+        "完整 Notebook",
+        "图谱可视化",
+        "Cypher 查询",
+        "自然语言查询",
+        "代码：NL2Cypher",
     ]
 )
 
 with tab_code_kg:
-    st.write("With a few lines of code, we can build a knowledge graph with LLM, LlamaIndex and NebulaGraph.")
-    st.write("See full notebook for more details and try Graph Visualizations, Query, and Natural Language to Cypher by clicking on the tabs on the right.")
+    st.header("利用 LLM，几行代码构建知识图谱")
     st.code(body=CODE_BUILD_KG, language="python")
 
 with tab_notebook:
-    st.header("Full Notebook")
-    st.markdown("""
+    st.header("完整 Demo 过程 Notebook")
+    st.write("""
 
-This is the full notebook to demonstrate how to:
+这个 Notebook 展示了如何利用 LLM 从不同类型的信息源（以维基百科为例）中抽取知识三元组，并存储到图数据库 NebulaGraph 中。
 
-- Extract from data sources and build a knowledge graph with LLM and Llama Index, NebulaGraph in 3 lines of code
-- Query the Knowledge Graph with nGQL and visualize the graph
-- Query the knowledge graph with natural language in 1 line of code(both Langchain and Llama Index)
-                """)
+本 Demo 中，我们先抽取了维基百科中关于《银河护卫队3》的信息，然后利用 LLM 生成的知识三元组，构建了一个图谱。
+然后利用 Cypher 查询图谱，最后利用 LlamaIndex 和 Langchain 中的 NL2NebulaCypher，实现了自然语言查询图谱的功能。
+
+您可以点击其他标签亲自试玩图谱的可视化、Cypher 查询、自然语言查询（NL2NebulaCypher）等功能。
+
+             """)
     # link to download notebook
     st.markdown(
         """
-[Download](https://www.siwei.io/demo-dumps/kg-llm/KG_Building.ipynb) the notebook.
+这里可以[下载](https://www.siwei.io/demo-dumps/kg-llm/KG_Building.ipynb) 完整的 Notebook。
 """
     )
 
@@ -361,7 +362,7 @@ This is the full notebook to demonstrate how to:
     )
 
 with tab_graph_view:
-    st.header("Graph View")
+    st.header("图谱的可视化采样")
     components.iframe(
         src="https://www.siwei.io/demo-dumps/kg-llm/nebulagraph_draw_sample.html",
         height=500,
@@ -369,11 +370,11 @@ with tab_graph_view:
     )
 
 with tab_cypher:
-    st.header("Query Knowledge Graph in nGQL")
+    st.header("Cypher 查询图库")
     query_string = st.text_input(
-        label="Enter nGQL query string", value="MATCH ()-[e]->() RETURN e LIMIT 25"
+        label="输入查询语句", value="MATCH ()-[e]->() RETURN e LIMIT 25"
     )
-    if st.button("> execute"):
+    if st.button("> 执行"):
         # run query
         result = query_nebulagraph(query_string)
 
@@ -394,27 +395,27 @@ with tab_cypher:
         components.html(graph_html, height=500, scrolling=True)
 
 with tab_nl2cypher:
-    st.header("Natural Language to Cypher")
+    st.header("使用自然语言查询图库")
     nl_query_string = st.text_input(
-        label="Enter natural language query string", value="Tell me about Peter Quill?"
+        label="输入自然语言问题", value="Tell me about Peter Quill?"
     )
-    if st.button("Ask KG"):
+    if st.button("生成 Cypher 查询语句，并执行"):
         response = nl2kg_query_engine.query(nl_query_string)
         graph_query = list(response.metadata.values())[0]["graph_store_query"]
         graph_query = graph_query.replace("WHERE", "\n  WHERE").replace(
             "RETURN", "\nRETURN"
         )
         answer = str(response)
-        st.write(f"Answer: {answer}")
+        st.write(f"答案: {answer}")
         st.markdown(
             f"""
-## Generated NebulaGraph Cypher Query
+## 利用 LLM 生成的图查询语句
 ```cypther
 {graph_query}
 ```
 """
         )
-        st.write("## Rendered Graph")
+        st.write("## 结果可视化")
         render_query = cypher_to_all_paths(graph_query)
         result = query_nebulagraph(render_query)
         result_df = result_to_df(result)
@@ -429,9 +430,9 @@ with tab_nl2cypher:
 
 
 with tab_code_nl2cypher:
-    st.header(
-        "Natural Language to NebulaGraph Cypher Code with Langchain and Llama Index"
-    )
+
+    st.write("利用 Langchain 或者 Llama Index，我们可以只用几行代码就实现自然语言查询图谱（NL2NebulaCypher）")
+
     tab_langchain, tab_llamaindex = st.tabs(["Langchain", "Llama Index"])
     with tab_langchain:
         st.code(body=CODE_NL2CYPHER_LANGCHAIN, language="python")
@@ -441,7 +442,7 @@ with tab_code_nl2cypher:
     st.markdown(
         """
 
-## References
+## 参考文档
                 
 - [Langchain: NebulaGraphQAChain](https://python.langchain.com/docs/modules/chains/additional/graph_nebula_qa)
 - [Llama Index: KnowledgeGraphQueryEngine](https://gpt-index.readthedocs.io/en/latest/examples/query_engine/knowledge_graph_query_engine.html)
