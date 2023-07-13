@@ -100,6 +100,99 @@ response = nl2kg_query_engine.query(
 """
 
 
+import os
+import json
+import openai
+from langchain.llms import AzureOpenAI
+from langchain.embeddings import OpenAIEmbeddings
+from llama_index import LangchainEmbedding
+from llama_index import (
+    VectorStoreIndex,
+    SimpleDirectoryReader,
+    KnowledgeGraphIndex,
+    LLMPredictor,
+    ServiceContext,
+)
+
+from llama_index.storage.storage_context import StorageContext
+from llama_index.graph_stores import NebulaGraphStore
+
+import logging
+import sys
+
+logging.basicConfig(
+    stream=sys.stdout, level=logging.INFO
+)  # logging.DEBUG for more verbose output
+logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
+
+openai.api_type = "azure"
+openai.api_base = st.secrets["OPENAI_API_BASE"]
+openai.api_version = "2022-12-01"
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+llm = AzureOpenAI(
+    deployment_name=st.secrets["DEPLOYMENT_NAME"],
+    temperature=0,
+    openai_api_version=openai.api_version,
+    model_kwargs={
+        "api_key": openai.api_key,
+        "api_base": openai.api_base,
+        "api_type": openai.api_type,
+        "api_version": openai.api_version,
+    },
+)
+llm_predictor = LLMPredictor(llm=llm)
+
+# You need to deploy your own embedding model as well as your own chat completion model
+embedding_llm = LangchainEmbedding(
+    OpenAIEmbeddings(
+        model="text-embedding-ada-002",
+        deployment=st.secrets["EMBEDDING_DEPLOYMENT_NAME"],
+        openai_api_key=openai.api_key,
+        openai_api_base=openai.api_base,
+        openai_api_type=openai.api_type,
+        openai_api_version=openai.api_version,
+    ),
+    embed_batch_size=1,
+)
+
+service_context = ServiceContext.from_defaults(
+    llm_predictor=llm_predictor,
+    embed_model=embedding_llm,
+)
+os.environ["NEBULA_USER"] = st.secrets["graphd_user"]
+os.environ["NEBULA_PASSWORD"] = st.secrets["graphd_password"]
+os.environ[
+    "NEBULA_ADDRESS"
+] = f"{st.secrets['graphd_host']}:{st.secrets['graphd_port']}"
+
+space_name = "guardians"
+edge_types, rel_prop_names = ["relationship"], [
+    "relationship"
+]  # default, could be omit if create from an empty kg
+tags = ["entity"]  # default, could be omit if create from an empty kg
+
+graph_store = NebulaGraphStore(
+    space_name=space_name,
+    edge_types=edge_types,
+    rel_prop_names=rel_prop_names,
+    tags=tags,
+)
+storage_context = StorageContext.from_defaults(graph_store=graph_store)
+
+from llama_index.query_engine import KnowledgeGraphQueryEngine
+
+from llama_index.storage.storage_context import StorageContext
+from llama_index.graph_stores import NebulaGraphStore
+
+nl2kg_query_engine = KnowledgeGraphQueryEngine(
+    storage_context=storage_context,
+    service_context=service_context,
+    llm=llm,
+    verbose=True,
+)
+
+
 def cypher_to_all_paths(query):
     # Find the MATCH and RETURN parts
     match_parts = re.findall(r"(MATCH .+?(?=MATCH|$))", query, re.I | re.S)
@@ -203,11 +296,11 @@ def create_pyvis_graph(result_df):
 
 def query_nebulagraph(
     query,
-    space_name="llamaindex",
-    address="localhost",
+    space_name=space_name,
+    address=st.secrets["graphd_host"],
     port=9669,
-    user="root",
-    password="nebula",
+    user=st.secrets["graphd_user"],
+    password=st.secrets["graphd_password"],
 ):
     from nebula3.Config import SessionPoolConfig
     from nebula3.gclient.net.SessionPool import SessionPool
@@ -217,98 +310,6 @@ def query_nebulagraph(
     session_pool.init(config)
     return session_pool.execute(query)
 
-
-import os
-import json
-import openai
-from langchain.llms import AzureOpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from llama_index import LangchainEmbedding
-from llama_index import (
-    VectorStoreIndex,
-    SimpleDirectoryReader,
-    KnowledgeGraphIndex,
-    LLMPredictor,
-    ServiceContext,
-)
-
-from llama_index.storage.storage_context import StorageContext
-from llama_index.graph_stores import NebulaGraphStore
-
-import logging
-import sys
-
-logging.basicConfig(
-    stream=sys.stdout, level=logging.INFO
-)  # logging.DEBUG for more verbose output
-logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
-
-openai.api_type = "azure"
-openai.api_base = st.secrets["OPENAI_API_BASE"]
-openai.api_version = "2022-12-01"
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
-llm = AzureOpenAI(
-    deployment_name=st.secrets["DEPLOYMENT_NAME"],
-    temperature=0,
-    openai_api_version=openai.api_version,
-    model_kwargs={
-        "api_key": openai.api_key,
-        "api_base": openai.api_base,
-        "api_type": openai.api_type,
-        "api_version": openai.api_version,
-    },
-)
-llm_predictor = LLMPredictor(llm=llm)
-
-# You need to deploy your own embedding model as well as your own chat completion model
-embedding_llm = LangchainEmbedding(
-    OpenAIEmbeddings(
-        model="text-embedding-ada-002",
-        deployment=st.secrets["EMBEDDING_DEPLOYMENT_NAME"],
-        openai_api_key=openai.api_key,
-        openai_api_base=openai.api_base,
-        openai_api_type=openai.api_type,
-        openai_api_version=openai.api_version,
-    ),
-    embed_batch_size=1,
-)
-
-service_context = ServiceContext.from_defaults(
-    llm_predictor=llm_predictor,
-    embed_model=embedding_llm,
-)
-os.environ["NEBULA_USER"] = st.secrets["graphd_user"]
-os.environ["NEBULA_PASSWORD"] = st.secrets["graphd_password"]
-os.environ[
-    "NEBULA_ADDRESS"
-] = f"{st.secrets['graphd_host']}:{st.secrets['graphd_port']}"
-
-space_name = "guardians"
-edge_types, rel_prop_names = ["relationship"], [
-    "relationship"
-]  # default, could be omit if create from an empty kg
-tags = ["entity"]  # default, could be omit if create from an empty kg
-
-graph_store = NebulaGraphStore(
-    space_name=space_name,
-    edge_types=edge_types,
-    rel_prop_names=rel_prop_names,
-    tags=tags,
-)
-storage_context = StorageContext.from_defaults(graph_store=graph_store)
-
-from llama_index.query_engine import KnowledgeGraphQueryEngine
-
-from llama_index.storage.storage_context import StorageContext
-from llama_index.graph_stores import NebulaGraphStore
-
-nl2kg_query_engine = KnowledgeGraphQueryEngine(
-    storage_context=storage_context,
-    service_context=service_context,
-    llm=llm,
-    verbose=True,
-)
 
 st.title("Knowledge Graph Build and Query")
 
@@ -337,9 +338,11 @@ with tab_code_kg:
 with tab_notebook:
     st.header("Full Notebook")
     # link to download notebook
-    st.markdown("""
+    st.markdown(
+        """
 [Download](https://www.siwei.io/demo-dumps/kg-llm/KG_Building.ipynb) the notebook.
-""")
+"""
+    )
 
     components.iframe(
         src="https://www.siwei.io/demo-dumps/kg-llm/KG_Building.html",
