@@ -332,20 +332,26 @@ st.title("Demo: Knowledge Graph Build and Query with LLM")
 )
 
 with tab_code_kg:
-    st.write("With a few lines of code, we can build a knowledge graph with LLM, LlamaIndex and NebulaGraph.")
-    st.write("See full notebook for more details and try Graph Visualizations, Query, and Natural Language to Cypher by clicking on the tabs on the right.")
+    st.write(
+        "With a few lines of code, we can build a knowledge graph with LLM, LlamaIndex and NebulaGraph."
+    )
+    st.write(
+        "See full notebook for more details and try Graph Visualizations, Query, and Natural Language to Cypher by clicking on the tabs on the right."
+    )
     st.code(body=CODE_BUILD_KG, language="python")
 
 with tab_notebook:
-    st.header("Full Notebook")
-    st.markdown("""
+    st.write("> Full Notebook")
+    st.markdown(
+        """
 
 This is the full notebook to demonstrate how to:
 
 - Extract from data sources and build a knowledge graph with LLM and Llama Index, NebulaGraph in 3 lines of code
 - Query the Knowledge Graph with nGQL and visualize the graph
 - Query the knowledge graph with natural language in 1 line of code(both Langchain and Llama Index)
-                """)
+                """
+    )
     # link to download notebook
     st.markdown(
         """
@@ -361,7 +367,9 @@ This is the full notebook to demonstrate how to:
     )
 
 with tab_graph_view:
-    st.header("Graph View")
+    st.write(
+        "> Sub-Graph View of the Knowledge Graph about [Guardians of the Galaxy Vol. 3](https://en.wikipedia.org/wiki/Guardians_of_the_Galaxy_Vol._3)"
+    )
     components.iframe(
         src="https://www.siwei.io/demo-dumps/kg-llm/nebulagraph_draw_sample.html",
         height=500,
@@ -369,7 +377,7 @@ with tab_graph_view:
     )
 
 with tab_cypher:
-    st.header("Query Knowledge Graph in nGQL")
+    st.write("> Query Knowledge Graph in nGQL")
     query_string = st.text_input(
         label="Enter nGQL query string", value="MATCH ()-[e]->() RETURN e LIMIT 25"
     )
@@ -394,7 +402,7 @@ with tab_cypher:
         components.html(graph_html, height=500, scrolling=True)
 
 with tab_nl2cypher:
-    st.header("Natural Language to Cypher")
+    st.write("> Natural Language to Cypher")
     nl_query_string = st.text_input(
         label="Enter natural language query string", value="Tell me about Peter Quill?"
     )
@@ -429,8 +437,8 @@ with tab_nl2cypher:
 
 
 with tab_code_nl2cypher:
-    st.header(
-        "Natural Language to NebulaGraph Cypher Code with Langchain and Llama Index"
+    st.write(
+        "> Natural Language to NebulaGraph Cypher Code with Langchain and Llama Index"
     )
     tab_langchain, tab_llamaindex = st.tabs(["Langchain", "Llama Index"])
     with tab_langchain:

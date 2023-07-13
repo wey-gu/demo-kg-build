@@ -332,12 +332,13 @@ st.title("利用 LLM 构建、查询知识图谱")
 )
 
 with tab_code_kg:
-    st.header("利用 LLM，几行代码构建知识图谱")
+    st.write("> 利用 LLM，几行代码构建知识图谱")
     st.code(body=CODE_BUILD_KG, language="python")
 
 with tab_notebook:
-    st.header("完整 Demo 过程 Notebook")
-    st.write("""
+    st.write("> 完整 Demo 过程 Notebook")
+    st.write(
+        """
 
 这个 Notebook 展示了如何利用 LLM 从不同类型的信息源（以维基百科为例）中抽取知识三元组，并存储到图数据库 NebulaGraph 中。
 
@@ -346,7 +347,8 @@ with tab_notebook:
 
 您可以点击其他标签亲自试玩图谱的可视化、Cypher 查询、自然语言查询（NL2NebulaCypher）等功能。
 
-             """)
+             """
+    )
     # link to download notebook
     st.markdown(
         """
@@ -362,7 +364,10 @@ with tab_notebook:
     )
 
 with tab_graph_view:
-    st.header("图谱的可视化采样")
+    st.write(
+        "> 图谱的可视化部分采样，知识来源[银河护卫队3](https://en.wikipedia.org/wiki/Guardians_of_the_Galaxy_Vol._3)"
+    )
+
     components.iframe(
         src="https://www.siwei.io/demo-dumps/kg-llm/nebulagraph_draw_sample.html",
         height=500,
@@ -370,7 +375,7 @@ with tab_graph_view:
     )
 
 with tab_cypher:
-    st.header("Cypher 查询图库")
+    st.write("> Cypher 查询图库")
     query_string = st.text_input(
         label="输入查询语句", value="MATCH ()-[e]->() RETURN e LIMIT 25"
     )
@@ -395,7 +400,7 @@ with tab_cypher:
         components.html(graph_html, height=500, scrolling=True)
 
 with tab_nl2cypher:
-    st.header("使用自然语言查询图库")
+    st.write("> 使用自然语言查询图库")
     nl_query_string = st.text_input(
         label="输入自然语言问题", value="Tell me about Peter Quill?"
     )
@@ -430,7 +435,6 @@ with tab_nl2cypher:
 
 
 with tab_code_nl2cypher:
-
     st.write("利用 Langchain 或者 Llama Index，我们可以只用几行代码就实现自然语言查询图谱（NL2NebulaCypher）")
 
     tab_langchain, tab_llamaindex = st.tabs(["Langchain", "Llama Index"])
