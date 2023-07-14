@@ -413,11 +413,11 @@ with tab_nl2cypher:
             "RETURN", "\nRETURN"
         )
         answer = str(response)
-        st.write(f"Answer: {answer}")
+        st.write(f"*Answer*: {answer}")
         st.markdown(
             f"""
 ## Generated NebulaGraph Cypher Query
-```cypther
+```cypher
 {graph_query}
 ```
 """

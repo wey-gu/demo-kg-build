@@ -1,6 +1,5 @@
 langchain==0.0.229
-# before new release covers https://github.com/jerryjliu/llama_index/pull/6642
-llama-index @ git+https://github.com/wey-gu/llama_index@knowledge_graph_query_engine
+llama-index==0.7.8
 nebula3-python==3.4.0
 networkx==3.0
 nltk==3.8.1

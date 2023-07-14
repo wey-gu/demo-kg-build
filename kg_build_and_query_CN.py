@@ -322,12 +322,12 @@ st.title("利用 LLM 构建、查询知识图谱")
     tab_code_nl2cypher,
 ) = st.tabs(
     [
-        "代码：构建知识图谱",
+        "代码:构建知识图谱",
         "完整 Notebook",
         "图谱可视化",
         "Cypher 查询",
         "自然语言查询",
-        "代码：NL2Cypher",
+        "代码:NL2Cypher",
     ]
 )
 
@@ -411,11 +411,11 @@ with tab_nl2cypher:
             "RETURN", "\nRETURN"
         )
         answer = str(response)
-        st.write(f"答案: {answer}")
+        st.write(f"*答案*: {answer}")
         st.markdown(
             f"""
 ## 利用 LLM 生成的图查询语句
-```cypther
+```cypher
 {graph_query}
 ```
 """
