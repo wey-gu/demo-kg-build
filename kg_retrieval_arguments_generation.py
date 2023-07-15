@@ -420,7 +420,7 @@ with tab_NL2Cypher_vs_GraphRAG:
             answer_NL2Cypher = str(response)
             st.markdown(
                 f"""
-> Query used.
+> Query used
 
 ```cypher
 {graph_query}
@@ -448,11 +448,11 @@ with tab_NL2Cypher_vs_GraphRAG:
             answer_GraphRAG = str(response)
 
             related_entities = list(list(response.metadata.values())[0]['kg_rel_map'].keys())
-            render_query = f"MATCH p=(n)-[]-(m) \n  WHERE id(n) in {related_entities} \nRETURN p"
+            render_query = f"MATCH p=(n)-[*1..2]-() \n  WHERE id(n) IN {related_entities} \nRETURN p"
 
             st.markdown(
                 f"""
-> RAG Subgraph Query
+> RAG Subgraph Query(depth=2)
 
 ```cypher
 {render_query}
