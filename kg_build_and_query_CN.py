@@ -103,7 +103,7 @@ response = nl2kg_query_engine.query(
 import os
 import json
 import openai
-from langchain.llms import AzureOpenAI
+from llama_index.llms import AzureOpenAI
 from langchain.embeddings import OpenAIEmbeddings
 from llama_index import LangchainEmbedding
 from llama_index import (
@@ -123,23 +123,18 @@ import sys
 logging.basicConfig(
     stream=sys.stdout, level=logging.INFO
 )  # logging.DEBUG for more verbose output
-logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
+# logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
 openai.api_type = "azure"
 openai.api_base = st.secrets["OPENAI_API_BASE"]
-openai.api_version = "2022-12-01"
+# openai.api_version = "2022-12-01" azure gpt-3
+openai.api_version = "2023-05-15"  # azure gpt-3.5 turbo
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 llm = AzureOpenAI(
-    deployment_name=st.secrets["DEPLOYMENT_NAME"],
+    engine=st.secrets["DEPLOYMENT_NAME"],
     temperature=0,
-    openai_api_version=openai.api_version,
-    model_kwargs={
-        "api_key": openai.api_key,
-        "api_base": openai.api_base,
-        "api_type": openai.api_type,
-        "api_version": openai.api_version,
-    },
+    model="gpt-35-turbo",
 )
 llm_predictor = LLMPredictor(llm=llm)
 
