@@ -1,4 +1,4 @@
-langchain==0.0.229
+langchain
 llama-index==0.8.9
 nebula3-python==3.4.0
 networkx==3.0
