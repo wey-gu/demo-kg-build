@@ -1,5 +1,5 @@
 langchain==0.0.229
-llama-index==0.7.8
+llama-index==0.8.9
 nebula3-python==3.4.0
 networkx==3.0
 nltk==3.8.1

@@ -113,7 +113,9 @@ graph_store = NebulaGraphStore(
 
 from llama_index import load_index_from_storage
 
-storage_context = StorageContext.from_defaults(persist_dir='./storage_graph', graph_store=graph_store)
+storage_context = StorageContext.from_defaults(
+    persist_dir="./storage_graph", graph_store=graph_store
+)
 kg_index = load_index_from_storage(
     storage_context=storage_context,
     service_context=service_context,
@@ -125,10 +127,9 @@ kg_index = load_index_from_storage(
     include_embeddings=True,
 )
 
-storage_context_vector = StorageContext.from_defaults(persist_dir='./storage_vector')
+storage_context_vector = StorageContext.from_defaults(persist_dir="./storage_vector")
 vector_index = load_index_from_storage(
-    service_context=service_context,
-    storage_context=storage_context_vector
+    service_context=service_context, storage_context=storage_context_vector
 )
 
 from llama_index.query_engine import KnowledgeGraphQueryEngine
@@ -200,6 +201,7 @@ class CustomRetriever(BaseRetriever):
 
         retrieve_nodes = [combined_dict[rid] for rid in retrieve_ids]
         return retrieve_nodes
+
 
 from llama_index import get_response_synthesizer
 from llama_index.query_engine import RetrieverQueryEngine
@@ -437,12 +439,13 @@ with tab_NL2Cypher_vs_GraphRAG:
 
             st.write(f"*Answer*: {answer_NL2Cypher}")
 
-
         with col_GraphRAG:
             response = response_GraphRAG
             answer_GraphRAG = str(response)
 
-            related_entities = list(list(response.metadata.values())[0]['kg_rel_map'].keys())
+            related_entities = list(
+                list(response.metadata.values())[0]["kg_rel_map"].keys()
+            )
             render_query = f"MATCH p=(n)-[*1..2]-() \n  WHERE id(n) IN {related_entities} \nRETURN p"
 
             st.markdown(
@@ -468,14 +471,15 @@ with tab_NL2Cypher_vs_GraphRAG:
 
             st.write(f"*Answer*: {answer_GraphRAG}")
         st.write("## Compare the two QA result")
-        result = llm.complete(f"""
+        result = llm.complete(
+            f"""
 Compare the two QA result on "{query_string}", list the differences between them, to help evalute them. Output in markdown table.
 
 Result from NL2Cypher: {str(response_NL2Cypher)}
 ---
 Result from Graph RAG: {str(response_GraphRAG)}
 """
-            )
+        )
         st.markdown(result.text)
 
 with tab_Vector_vs_Graph_Vector:
@@ -499,7 +503,8 @@ with tab_Vector_vs_Graph_Vector:
 
         st.write("## Compare the two QA result")
         st.markdown(
-            llm.complete(f"""
+            llm.complete(
+                f"""
 Compare the two QA result on "{query_string}", list the differences between them, to help evalute them. Output in markdown table.
 
 Result from Vector RAG: {str(response_VectorRAG)}
