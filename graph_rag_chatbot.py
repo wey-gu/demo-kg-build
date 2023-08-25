@@ -38,7 +38,7 @@ from llama_index.graph_stores import NebulaGraphStore
 
 openai.api_type = "azure"
 openai.api_base = st.secrets["OPENAI_API_BASE"]
-openai.api_version = "2023-05-15"  # azure gpt-3.5 turbo
+openai.api_version = "2023-03-15-preview"  # azure gpt-3.5 turbo
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 llm = AzureOpenAI(
@@ -75,7 +75,7 @@ os.environ[
     "NEBULA_ADDRESS"
 ] = f"{st.secrets['graphd_host']}:{st.secrets['graphd_port']}"
 
-space_name = "guardians"
+space_name = "rag_workshop"
 edge_types, rel_prop_names = ["relationship"], [
     "relationship"
 ]  # default, could be omit if create from an empty kg
@@ -91,7 +91,7 @@ graph_store = NebulaGraphStore(
 # Storage Context
 
 storage_context = StorageContext.from_defaults(
-    persist_dir="./storage_graph", graph_store=graph_store
+    persist_dir="./chatbot_storage_graph", graph_store=graph_store
 )
 
 # KG Index
@@ -104,7 +104,7 @@ kg_index = load_index_from_storage(
     edge_types=edge_types,
     rel_prop_names=rel_prop_names,
     tags=tags,
-    include_embeddings=True,
+    verbose=True,
 )
 
 kg_index_query_engine = kg_index.as_query_engine(
@@ -115,7 +115,9 @@ kg_index_query_engine = kg_index.as_query_engine(
 
 # Vector Index
 
-storage_context_vector = StorageContext.from_defaults(persist_dir="./storage_vector")
+storage_context_vector = StorageContext.from_defaults(
+    persist_dir="./chatbot_storage_vector"
+)
 vector_index = load_index_from_storage(
     service_context=service_context, storage_context=storage_context_vector
 )
@@ -134,37 +136,50 @@ graph_rag_retriever = KnowledgeGraphRAGRetriever(
 
 # Graph RAG Query Engine
 
-graph_rag_query_engine = RetrieverQueryEngine.from_args(
-    graph_rag_retriever, service_context=service_context
-)
+# graph_rag_query_engine = RetrieverQueryEngine.from_args(
+#     graph_rag_retriever,
+#     service_context=service_context,
+#     verbose=True,
+# )
 
-# Query tools
+# # Query tools
 
-query_engine_tools = [
-    QueryEngineTool(
-        query_engine=graph_rag_query_engine,
-        metadata=ToolMetadata(
-            name="Knowledge Graph extracted from Wikipedia",
-            description="Provides info about the movie guardians of the galaxy vol 3, in the form of a knowledge graph",
-        ),
-    ),
-    QueryEngineTool(
-        query_engine=vector_rag_query_engine,
-        metadata=ToolMetadata(
-            name="Data Chunks based on Semantic Search",
-            description="Provides info about the movie guardians of the galaxy vol 3, in the form of Data Chunks. "
-            "Will search large piece of text and extract the most relevant information.",
-        ),
-    ),
-]
+# query_engine_tools = [
+#     QueryEngineTool(
+#         query_engine=graph_rag_query_engine,
+#         metadata=ToolMetadata(
+#             name="Guardians of the Galaxy Vol-3",
+#             description="Provides info about the movie guardians of the galaxy vol 3, extracted from wikipedia.",
+#         ),
+#     ),
+#     QueryEngineTool(
+#         query_engine=vector_rag_query_engine,
+#         metadata=ToolMetadata(
+#             name="Data Chunks based on Semantic Search",
+#             description="Provides info about the movie guardians of the galaxy vol 3, in the form of Data Chunks. "
+#             "Will search large piece of text and extract the most relevant information.",
+#         ),
+#     ),
+# ]
 
 # Chatbot
 
-from llama_index.agent import ReActAgent
+# from llama_index.agent import ReActAgent
+from llama_index.memory import ChatMemoryBuffer
 
-chat_engine = ReActAgent.from_tools(query_engine_tools, llm=llm, verbose=True)
+memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
+# chat_engine = ReActAgent.from_tools(
+#     query_engine_tools, llm=llm, memory=memory, verbose=True
+# )
+
+chat_engine = kg_index.as_chat_engine(
+    chat_mode="react",
+    memory=memory,
+    verbose=True,
+)
 
 # utils
+
 
 def cypher_to_all_paths(query):
     # Find the MATCH and RETURN parts
@@ -282,6 +297,7 @@ def query_nebulagraph(
     session_pool.init(config)
     return session_pool.execute(query)
 
+
 #### page
 
 st.set_page_config(
@@ -303,7 +319,7 @@ if "messages" not in st.session_state.keys():  # Initialize the chat messages hi
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": "Ask me question about **Guardians of the Galaxy Vol. 3.**",
+            "content": "Ask me question from the knowledge in **Guardians of the Galaxy Vol. 3.**",
         }
     ]
 
@@ -332,9 +348,7 @@ with st.sidebar:
 ## How it works
 """
     )
-    prompt = st.text_input(
-        label="", value="Who is Rocket?"
-    )
+    prompt = st.text_input(label="", value="Who is Rocket?")
 
     if st.button("Inspect 🔎"):
         response = kg_index_query_engine.query(prompt)
@@ -344,9 +358,12 @@ with st.sidebar:
         related_entities = list(
             list(response.metadata.values())[0]["kg_rel_map"].keys()
         )
-        render_query = f"MATCH p=(n)-[*1..2]-() \n  WHERE id(n) IN {related_entities} \nRETURN p"
+        render_query = (
+            f"MATCH p=(n)-[*1..2]-() \n  WHERE id(n) IN {related_entities} \nRETURN p"
+        )
 
-        st.markdown(f"""
+        st.markdown(
+            f"""
 > Query to NebulaGraph:
 
 ```cypher
