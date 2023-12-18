@@ -6,4 +6,4 @@ openai==0.28.0
 pyvis==0.3.2
 PyYAML==6.0
 tenacity==8.2.2
-langchain
+langchain==0.0.335
