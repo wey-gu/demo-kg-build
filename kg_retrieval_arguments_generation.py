@@ -83,7 +83,7 @@ embedding_llm = LangchainEmbedding(
         openai_api_key=openai.api_key,
         openai_api_base=openai.api_base,
         openai_api_type=openai.api_type,
-        openai_api_version=openai.api_version,
+        openai_api_version="2022-12-01",
     ),
     embed_batch_size=1,
 )
