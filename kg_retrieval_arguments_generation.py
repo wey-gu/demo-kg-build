@@ -485,7 +485,7 @@ Result from Graph RAG: {str(response_GraphRAG)}
 with tab_Vector_vs_Graph_Vector:
     st.write("> Vector RAG vs Graph + Vector RAG")
     query_string = st.text_input(
-        label="Type the question to answer", value="Tell me about Peter Quill?"
+        label="Type the question to answer", value="Tell me about Rocket?"
     )
     col_VectorRAG, col_GraphVectorRAG = st.columns(2)
     if st.button("Generate Answer with Vector and Graph + Vector"):
